@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ecommerce.local/schemas/events/payment.confirmed/v1",
+  "title": "payment.confirmed",
+  "type": "object",
+  "required": ["eventId", "paymentId", "orderId", "amount", "currency", "occurredAt"],
+  "properties": {
+    "eventId": { "type": "string", "format": "uuid" },
+    "paymentId": { "type": "string", "format": "uuid" },
+    "orderId": { "type": "string", "format": "uuid" },
+    "amount": { "type": "number", "minimum": 0 },
+    "currency": { "type": "string", "minLength": 3, "maxLength": 3 },
+    "occurredAt": { "type": "string", "format": "date-time" }
+  }
+}

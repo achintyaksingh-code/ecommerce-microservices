@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ecommerce.local/schemas/events/order.created/v1",
+  "title": "order.created",
+  "type": "object",
+  "required": ["eventId", "orderId", "userId", "totalAmount", "currency", "occurredAt"],
+  "properties": {
+    "eventId": { "type": "string", "format": "uuid" },
+    "orderId": { "type": "string", "format": "uuid" },
+    "userId": { "type": "string" },
+    "totalAmount": { "type": "number", "minimum": 0 },
+    "currency": { "type": "string", "minLength": 3, "maxLength": 3 },
+    "occurredAt": { "type": "string", "format": "date-time" }
+  }
+}

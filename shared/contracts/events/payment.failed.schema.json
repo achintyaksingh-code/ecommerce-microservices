@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ecommerce.local/schemas/events/payment.failed/v1",
+  "title": "payment.failed",
+  "type": "object",
+  "required": ["eventId", "paymentId", "orderId", "reason", "occurredAt"],
+  "properties": {
+    "eventId": { "type": "string", "format": "uuid" },
+    "paymentId": { "type": "string", "format": "uuid" },
+    "orderId": { "type": "string", "format": "uuid" },
+    "reason": { "type": "string" },
+    "occurredAt": { "type": "string", "format": "date-time" }
+  }
+}

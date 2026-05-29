@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ecommerce.local/schemas/events/order.cancelled/v1",
+  "title": "order.cancelled",
+  "type": "object",
+  "required": ["eventId", "orderId", "reason", "occurredAt"],
+  "properties": {
+    "eventId": { "type": "string", "format": "uuid" },
+    "orderId": { "type": "string", "format": "uuid" },
+    "reason": { "type": "string" },
+    "occurredAt": { "type": "string", "format": "date-time" }
+  }
+}

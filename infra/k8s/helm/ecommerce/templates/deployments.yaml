@@ -1,0 +1,116 @@
+{{- $root := . -}}
+{{- $services := dict
+  "config-server" (dict "name" "configServer" "path" "platform/config-server")
+  "discovery-server" (dict "name" "discoveryServer" "path" "platform/discovery-server")
+  "api-gateway" (dict "name" "apiGateway" "path" "platform/api-gateway")
+  "auth-service" (dict "name" "authService" "path" "services/auth-service" "db" "auth_db")
+  "catalog-service" (dict "name" "catalogService" "path" "services/catalog-service" "db" "catalog_db")
+  "cart-service" (dict "name" "cartService" "path" "services/cart-service" "db" "cart_db")
+  "order-service" (dict "name" "orderService" "path" "services/order-service" "db" "order_db")
+  "payment-service" (dict "name" "paymentService" "path" "services/payment-service" "db" "payment_db")
+-}}
+{{- range $svcName, $cfg := $services }}
+{{- $svc := index $root.Values.services $cfg.name }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $svcName }}
+  labels:
+    app: {{ $svcName }}
+    {{- include "ecommerce.labels" $root | nindent 4 }}
+spec:
+  replicas: {{ $svc.replicas }}
+  selector:
+    matchLabels:
+      app: {{ $svcName }}
+  template:
+    metadata:
+      labels:
+        app: {{ $svcName }}
+    spec:
+      containers:
+        - name: {{ $svcName }}
+          image: "{{ $root.Values.image.repository }}/{{ $svcName }}:{{ $root.Values.image.tag }}"
+          imagePullPolicy: {{ $root.Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ $svc.port }}
+          env:
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "ecommerce.name" $root }}-secrets
+                  key: JWT_SECRET
+            - name: DB_HOST
+              value: {{ $root.Values.postgres.host | quote }}
+            - name: DB_PORT
+              value: {{ $root.Values.postgres.port | quote }}
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "ecommerce.name" $root }}-secrets
+                  key: DB_USER
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "ecommerce.name" $root }}-secrets
+                  key: DB_PASSWORD
+            {{- if $cfg.db }}
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:postgresql://{{ $root.Values.postgres.host }}:{{ $root.Values.postgres.port }}/{{ $cfg.db }}"
+            {{- end }}
+            - name: REDIS_HOST
+              value: {{ $root.Values.redis.host | quote }}
+            - name: REDIS_PORT
+              value: {{ $root.Values.redis.port | quote }}
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: {{ $root.Values.kafka.bootstrapServers | quote }}
+            - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+              value: "http://discovery-server:8761/eureka/"
+          resources:
+            {{- toYaml $root.Values.resources | nindent 12 }}
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: {{ $svc.port }}
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: {{ $svc.port }}
+            initialDelaySeconds: 60
+            periodSeconds: 20
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $svcName }}
+spec:
+  selector:
+    app: {{ $svcName }}
+  ports:
+    - port: {{ $svc.port }}
+      targetPort: {{ $svc.port }}
+---
+{{- if $root.Values.autoscaling.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ $svcName }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ $svcName }}
+  minReplicas: {{ $root.Values.autoscaling.minReplicas }}
+  maxReplicas: {{ $root.Values.autoscaling.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ $root.Values.autoscaling.targetCPUUtilizationPercentage }}
+---
+{{- end }}
+{{- end }}

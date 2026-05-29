@@ -1,0 +1,59 @@
+image:
+  repository: ecommerce
+  tag: "1.0.0-SNAPSHOT"
+  pullPolicy: IfNotPresent
+
+jwtSecret: change-me-in-production-use-at-least-256-bits-secret-key!!
+
+postgres:
+  host: postgres
+  port: 5432
+  user: ecommerce
+  password: ecommerce
+
+redis:
+  host: redis
+  port: 6379
+
+kafka:
+  bootstrapServers: kafka:9092
+
+services:
+  configServer:
+    port: 8888
+    replicas: 1
+  discoveryServer:
+    port: 8761
+    replicas: 1
+  apiGateway:
+    port: 8080
+    replicas: 2
+  authService:
+    port: 8081
+    replicas: 2
+  catalogService:
+    port: 8082
+    replicas: 2
+  cartService:
+    port: 8083
+    replicas: 2
+  orderService:
+    port: 8084
+    replicas: 2
+  paymentService:
+    port: 8085
+    replicas: 2
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 70
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
